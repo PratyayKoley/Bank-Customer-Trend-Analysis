@@ -1,27 +1,28 @@
-library(data.table); library(mongolite)
+library(data.table)
+library(mongolite)
+library(randomForest)
 
-# load test/new data
-test <- fread("data/processed_bank_data.csv") # or new dataset
+# Load processed data
+test <- fread("data/processed_bank_data.csv")
 
-# load models
+# Load models
 rf_model <- readRDS("models/churn_rf_model.rds")
-kmeans_model <- readRDS("models/customer_kmeans.rds")
 
-# scoring
-test$churn_prob <- predict(rf_model, test, type = "prob")[,2]  # randomForest needs probability type
-# If your randomForest version doesn't support type="prob" on direct predict for factor, use predict(rf_model, test, type="prob")
-test$segment <- predict_kmeans <- function(newdata, km){
-  # naive assignment to closest center
-  centers <- km$centers
-  sapply(1:nrow(newdata), function(i) which.min(colSums((t(centers) - as.numeric(newdata[i,]))^2)))
-}
-test$segment <- predict_kmeans(as.matrix(test[, .(avg_balance, credit_utilization)]), kmeans_model)
+# Features
+features <- c("campaign", "pdays", "previous", "duration_min",
+              "emp_rate_scaled", "cons_price_scaled",
+              "cons_conf_scaled", "euribor_scaled", "nr_employed_scaled")
 
-# Save output CSV
+# Scoring
+test$churn_prob <- predict(rf_model, test[, ..features], type="prob")[,2]
+
+# Optional: simple segmentation by campaign number (example)
+test$segment <- cut(test$campaign, breaks=4, labels=1:4)
+
+# Save output
 fwrite(test, "output/scored_output.csv")
 
-# Store to MongoDB
-m <- mongo(collection = "bank_insights", db = "bank_analytics", url = "mongodb://localhost:27017")
-# Optionally remove previous
-# m$drop()
+# Insert into MongoDB (Atlas or local)
+m <- mongo(collection = "bank_insights", db = "bank_analytics",
+           url = "mongodb+srv://pratyaykoley_db_user:9tlFBu9x9Ka77A1z@cluster0.gfnbg4k.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0") # change to Atlas URL if needed
 m$insert(data.frame(test))

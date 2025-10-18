@@ -20,7 +20,8 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   get_data <- reactiveVal(NULL)
   observeEvent(input$refresh, {
-    m <- mongo(collection = "bank_insights", db = "bank_analytics", url = "mongodb://localhost:27017")
+    m <- mongo(collection = "bank_insights", db = "bank_analytics",
+               url = "mongodb+srv://pratyaykoley_db_user:9tlFBu9x9Ka77A1z@cluster0.gfnbg4k.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     df <- m$find(limit = 10000) # adjust
     get_data(df)
   })

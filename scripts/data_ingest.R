@@ -1,6 +1,6 @@
 library(data.table)
 # If using local CSV:
-raw <- fread("data/bank_transactions.csv")
+raw <- fread("data/bank-additional-full.csv")
 
 # If reading from HDFS (development: skip unless rhdfs configured)
 # library(rhdfs); hdfs.init(); txt <- hdfs.read.text("/data/processed/bank_data.csv")
